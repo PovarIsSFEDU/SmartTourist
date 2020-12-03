@@ -33,7 +33,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.snackbar.Snackbar;
@@ -58,7 +57,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
     private boolean isLocationUpdatesActive;
 
     private GoogleMap mMap;
-    private UiSettings uiSettings;
+    //private UiSettings uiSettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +67,6 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
 
         fusedLocationClient = LocationServices
                 .getFusedLocationProviderClient(this);
@@ -80,11 +78,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
         startLocationUpdates();
 
 
-
     }
-
-
-
 
 
     /**
@@ -99,18 +93,13 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        uiSettings = mMap.getUiSettings();
+        //uiSettings = mMap.getUiSettings();
+
         if (currentLocation != null) {
             LatLng userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-            //mMap.addMarker(new MarkerOptions().position(userLocation).title("You are here"));
             mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
         }
-        if (!uiSettings.isCompassEnabled()) {
-            uiSettings.setCompassEnabled(true);
-        }
-
-
 
     }
 
@@ -196,7 +185,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
 
-        //TODO Разобраться с проблемой
+        //TODO Разобраться с проблемой, которая не влияет на сборку и запуск приложения
         //super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
 
@@ -243,6 +232,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
 
                 updateLocationUi();
 
+
             }
         };
 
@@ -252,6 +242,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
 
         if (currentLocation != null) {
             LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+
             mMap.addMarker(new MarkerOptions().position(currentLatLng).title("You are here"));
             mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
