@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "15929562693",
+    "firebase_url": "https://smart-tourist-0-1.firebaseio.com",
+    "project_id": "smart-tourist-0-1",
+    "storage_bucket": "smart-tourist-0-1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15929562693:android:4125b27679d0831c0ff52c",
+        "android_client_info": {
+          "package_name": "com.wacked.smarttourist"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "15929562693-3kumsous5bjsgrnbivfdr1himmpt8f69.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wacked.smarttourist",
+            "certificate_hash": "e2e877139fdd85726c6ba03d84cdbfb09dac4b98"
+          }
+        },
+        {
+          "client_id": "15929562693-cqpudrnbjssiqen74t8c4ud346okkr80.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRgbzkFPwthZkqblmBFlvVxV9PzP69LHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "15929562693-cqpudrnbjssiqen74t8c4ud346okkr80.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

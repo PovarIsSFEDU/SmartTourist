@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name = "Smart Tourist v.0.1"
