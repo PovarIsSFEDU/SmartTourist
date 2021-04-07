@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.RouteChoose">
+
+    <Button
+        android:id="@+id/route1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="55dp"
+        android:text="Маршрут 1"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/route2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="110dp"
+        android:text="Маршрут 2"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/route3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="165dp"
+        android:text="Маршрут 3"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        tools:ignore="HardcodedText" />
+</RelativeLayout>

@@ -52,6 +52,7 @@
         android:layout_marginTop="180dp"
         android:onClick="signInUser"
         android:text="Sign In"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
         tools:ignore="HardcodedText" />
 

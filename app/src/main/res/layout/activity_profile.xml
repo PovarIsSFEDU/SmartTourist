@@ -1,41 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/Theme.AppCompat.Light.DarkActionBar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.ProfileActivity">
 
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/my_toolbar"
+        app:titleTextColor="@color/white"
+        app:subtitleTextColor="@color/white"
+
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="5dp"
-        android:textSize="25sp"
-        android:layout_marginTop="200dp"
-        android:layout_marginRight="5dp"
-        android:text="More functions will be added soon!"
+        android:id="@+id/textView"
+        android:layout_width="135dp"
+        android:layout_height="42dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="192dp"
+        android:layout_marginEnd="115dp"
+        android:layout_marginBottom="310dp"
+        android:text="UserName"
         android:textAlignment="center"
+        android:textSize="25sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.096"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.403"
         tools:ignore="HardcodedText" />
-
 
     <Button
+        android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="5dp"
-        android:layout_marginTop="370dp"
-        android:layout_marginRight="5dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         android:onClick="SignOut"
         android:text="Sign Out"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.696"
         tools:ignore="HardcodedText" />
 
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="203dp"
+        android:layout_marginBottom="344dp"
+        android:onClick="SignOut"
+        android:src="@drawable/ic_baseline_exit_to_app_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.197"
+        tools:ignore="ContentDescription" />
 
-</RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

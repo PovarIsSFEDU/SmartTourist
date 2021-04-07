@@ -36,9 +36,10 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="400dp"
+            android:layout_marginTop="300dp"
             android:onClick="goToSignIn"
             android:text="Sign In"
+            android:textColor="#FFFFFF"
             android:textSize="22sp"
             tools:ignore="HardcodedText" />
 
@@ -48,6 +49,7 @@
             android:layout_marginTop="30dp"
             android:onClick="goToSignUp"
             android:text="Sign Up"
+            android:textColor="#FFFFFF"
             android:textSize="22sp"
             tools:ignore="HardcodedText" />
 

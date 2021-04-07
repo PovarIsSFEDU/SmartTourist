@@ -2,22 +2,33 @@ package com.wacked.smarttourist.activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -29,78 +40,249 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.PendingResult;
+import com.google.maps.model.DirectionsLeg;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.TravelMode;
 import com.wacked.smarttourist.BuildConfig;
 import com.wacked.smarttourist.R;
+import com.wacked.smarttourist.Route;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
-public class MainMapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
 
     private static final int CHECK_SETTINGS_CODE = 111;
     private static final int REQUEST_LOCATION_PERMISSION = 222;
-
-
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    FloatingActionButton fab;
+    Route route;
+    boolean onRoute = false;
+    Map<String, Integer> res = new HashMap<String, Integer>();
+    MediaPlayer mPlayer;
+    int id = 0;
     private FusedLocationProviderClient fusedLocationClient;
     private SettingsClient settingsClient;
     private LocationRequest locationRequest;
     private LocationSettingsRequest locationSettingsRequest;
     private LocationCallback locationCallback;
     private Location currentLocation;
-
     private boolean isLocationUpdatesActive;
+    private GoogleMap map;
+    private UiSettings uiSettings;
 
-    private GoogleMap mMap;
-    //private UiSettings uiSettings;
+    public static String DownloadFile(String fname) throws IOException {
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReferenceFromUrl("gs://smart-tourist-0-1.appspot.com/");
+        StorageReference islandRef = storageRef.child(fname);
+
+        File rootPath = new File(String.valueOf(Environment.getExternalStorageDirectory()), fname);
+        if (!rootPath.exists()) {
+            rootPath.mkdirs();
+        }
+
+
+        File localFile = File.createTempFile("record_", ".mp3", new File("/data/data/com.wacked.smarttourist/files"));
+
+
+        islandRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                int id = 0;
+                localFile.renameTo(new File(localFile.getPath() + String.format("%d", id)));
+                id += 1;
+                Log.d("Sucsesful download", localFile.getPath());
+
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.d("Unsucsesful download", exception.getMessage());
+            }
+        });
+        if (localFile.exists()) {
+            return "ERROR";
+        } else {
+            return localFile.getAbsolutePath();
+        }
+
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
         fusedLocationClient = LocationServices
                 .getFusedLocationProviderClient(this);
         settingsClient = LocationServices.getSettingsClient(this);
-
+        for (int i = 1; i < 28; i++) {
+            try {
+                DownloadFile(String.format("%d.mp3", i));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        ParseIDFromTxtLines();
         buildLocationRequest();
         buildLocationCallBack();
         buildLocationSettingsRequest();
         startLocationUpdates();
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onRoute = true;
+                LatLng userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                map.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+                map.animateCamera(CameraUpdateFactory.zoomTo(16));
 
-
+                startLocationUpdates();
+            }
+        });
+        Button Search = findViewById(R.id.search_button);
+        Search.setOnClickListener(this::MapSearch);
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        //uiSettings = mMap.getUiSettings();
+        map = googleMap;
+        uiSettings = map.getUiSettings();
+
 
         if (currentLocation != null) {
             LatLng userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
+            map.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+            map.animateCamera(CameraUpdateFactory.zoomTo(16));
         }
+        enableMyLocation();
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case CHECK_SETTINGS_CODE:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        startLocationUpdates();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        isLocationUpdatesActive = false;
+                        updateLocationUi();
+                        break;
+                }
+                break;
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isLocationUpdatesActive && checkLocationPermission()) {
+            buildLocationCallBack();
+            startLocationUpdates();
+        } else if (!checkLocationPermission()) {
+            requestLocationPermission();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mPlayer.isPlaying()) {
+            stopPlay();
+        }
+    }
+
+    private void buildLocationSettingsRequest() {
+
+        LocationSettingsRequest.Builder builder =
+                new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(locationRequest);
+        locationSettingsRequest = builder.build();
+
+    }
+
+    private void buildLocationCallBack() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                currentLocation = locationResult.getLastLocation();
+                updateLocationUi();
+            }
+        };
+    }
+
+    private void buildLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(8000);
+        locationRequest.setFastestInterval(6000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+    }
+
+    private void enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            if (map != null) {
+                map.setMyLocationEnabled(true);
+                if (!uiSettings.isMyLocationButtonEnabled()) {
+                    uiSettings.setMyLocationButtonEnabled(true);
+                }
+            }
+        } else {
+            // Permission to access the location is missing. Show rationale and request permission
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                    Manifest.permission.ACCESS_FINE_LOCATION, true);
+        }
     }
 
     private void stopLocationUpdates() {
@@ -115,178 +297,55 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     private void startLocationUpdates() {
-
         isLocationUpdatesActive = true;
-
         settingsClient.checkLocationSettings(locationSettingsRequest)
                 .addOnSuccessListener(this,
                         locationSettingsResponse -> {
-
                             if (ActivityCompat.checkSelfPermission(
                                     MainMapsActivity.this,
-                                    Manifest.permission.ACCESS_FINE_LOCATION) !=
-                                    PackageManager.PERMISSION_GRANTED &&
-                                    ActivityCompat
-                                            .checkSelfPermission(
-                                                    MainMapsActivity.this,
-                                                    Manifest.permission
-                                                            .ACCESS_COARSE_LOCATION) !=
+                                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                                    ActivityCompat.checkSelfPermission(MainMapsActivity.this,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION) !=
                                             PackageManager.PERMISSION_GRANTED) {
-
                                 return;
                             }
-                            fusedLocationClient.requestLocationUpdates(
-                                    locationRequest,
-                                    locationCallback,
-                                    Looper.myLooper()
-                            );
-
+                            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
                             updateLocationUi();
-
                         })
                 .addOnFailureListener(this, e -> {
-
-
                     int statusCode = ((ApiException) e).getStatusCode();
-
                     switch (statusCode) {
-
                         case LocationSettingsStatusCodes
                                 .RESOLUTION_REQUIRED:
                             try {
-                                ResolvableApiException resolvableApiException =
-                                        (ResolvableApiException) e;
-                                resolvableApiException.startResolutionForResult(
-                                        MainMapsActivity.this,
-                                        CHECK_SETTINGS_CODE
-                                );
+                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                                resolvableApiException.startResolutionForResult(MainMapsActivity.this, CHECK_SETTINGS_CODE);
                             } catch (IntentSender.SendIntentException sie) {
                                 sie.printStackTrace();
                             }
                             break;
-
-                        case LocationSettingsStatusCodes
-                                .SETTINGS_CHANGE_UNAVAILABLE:
-                            String message =
-                                    "Adjust location settings on your device";
-                            Toast.makeText(MainMapsActivity.this, message,
-                                    Toast.LENGTH_LONG).show();
-
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            String message = "Adjust location settings on your device";
+                            Toast.makeText(MainMapsActivity.this, message, Toast.LENGTH_LONG).show();
                             isLocationUpdatesActive = false;
-
                     }
-
                     updateLocationUi();
-
                 });
-
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
-        //TODO Разобраться с проблемой, которая не влияет на сборку и запуск приложения
-        //super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-
-            case CHECK_SETTINGS_CODE:
-
-                switch (resultCode) {
-
-                    case Activity.RESULT_OK:
-                        Log.d("MainActivity", "User has agreed to change location" +
-                                "settings");
-                        startLocationUpdates();
-                        break;
-
-                    case Activity.RESULT_CANCELED:
-                        Log.d("MainActivity", "User has not agreed to change location" +
-                                "settings");
-                        isLocationUpdatesActive = false;
-                        updateLocationUi();
-                        break;
-                }
-
-                break;
-        }
-
-    }
-
-    private void buildLocationSettingsRequest() {
-
-        LocationSettingsRequest.Builder builder =
-                new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(locationRequest);
-        locationSettingsRequest = builder.build();
-
-    }
-
-    private void buildLocationCallBack() {
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-
-                currentLocation = locationResult.getLastLocation();
-
-                updateLocationUi();
-
-
-            }
-        };
-
-    }
-
-    private void updateLocationUi() {
-
-        if (currentLocation != null) {
-            LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-
-            mMap.addMarker(new MarkerOptions().position(currentLatLng).title("You are here"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
-        }
-
-    }
-
-    private void buildLocationRequest() {
-
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(3000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (isLocationUpdatesActive && checkLocationPermission()) {
-
-            startLocationUpdates();
-
-        } else if (!checkLocationPermission()) {
-            requestLocationPermission();
-        }
+    private boolean checkLocationPermission() {
+        int permissionState = ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION);
+        return permissionState == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestLocationPermission() {
-
         boolean shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
         );
 
         if (shouldProvideRationale) {
-
             showSnackBar(
                     "Location permission is needed for " +
                             "app functionality",
@@ -298,11 +357,8 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
                             },
                             REQUEST_LOCATION_PERMISSION
                     )
-
             );
-
         } else {
-
             ActivityCompat.requestPermissions(
                     MainMapsActivity.this,
                     new String[]{
@@ -310,26 +366,7 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
                     },
                     REQUEST_LOCATION_PERMISSION
             );
-
         }
-
-    }
-
-    private void showSnackBar(
-            final String mainText,
-            final String action,
-            View.OnClickListener listener) {
-
-        Snackbar.make(
-                findViewById(android.R.id.content),
-                mainText,
-                Snackbar.LENGTH_INDEFINITE)
-                .setAction(
-                        action,
-                        listener
-                )
-                .show();
-
     }
 
     @Override
@@ -338,7 +375,6 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
                                            @NonNull int[] grantResults) {
 
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
-
             if (grantResults.length <= 0) {
                 Log.d("onRequestPermissions",
                         "Request was cancelled");
@@ -370,19 +406,214 @@ public class MainMapsActivity extends FragmentActivity implements OnMapReadyCall
 
     }
 
-    private boolean checkLocationPermission() {
+    private void showSnackBar(
+            final String mainText,
+            final String action,
+            View.OnClickListener listener) {
+        Snackbar.make(
+                findViewById(android.R.id.content),
+                mainText,
+                Snackbar.LENGTH_INDEFINITE)
+                .setAction(
+                        action,
+                        listener
+                )
+                .show();
+    }
 
-        int permissionState = ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        return permissionState == PackageManager.PERMISSION_GRANTED;
+    public String[] ParseFromTxtLines() {
+        ArrayList<String> outputArray = new ArrayList<String>();
+        InputStream is = getResources().openRawResource(R.raw.places);
+        InputStreamReader isp = new InputStreamReader(is);
+        try (BufferedReader reader = new BufferedReader(isp)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] adder = line.split(" ");
+                outputArray.add(adder[0]);
+            }
+        } catch (IOException e) {
+            Log.d("Error: ", e.getMessage());
+        }
+        String[] output = new String[outputArray.size()];
+        output = outputArray.toArray(output);
+        return output;
+    }
+
+    public void ParseIDFromTxtLines() {
+
+        InputStream is = getResources().openRawResource(R.raw.places);
+        InputStreamReader isp = new InputStreamReader(is);
+        try (BufferedReader reader = new BufferedReader(isp)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] adder = line.split(" ");
+                res.put(adder[0], Integer.parseInt(adder[1]));
+            }
+        } catch (IOException e) {
+            Log.d("Error: ", e.getMessage());
+        }
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void MapSearch(View view) {
+        try {
+            map.clear();
+            TextView locSearch = findViewById(R.id.LocSearch);
+            String location = locSearch.getText().toString();
+            List<Address> addressList;
+
+            Geocoder geocoder = new Geocoder(MainMapsActivity.this);
+            try {
+                addressList = geocoder.getFromLocationName(location, 1);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast toast = Toast.makeText(MainMapsActivity.this, "Введите корректный адрес!", Toast.LENGTH_SHORT);
+                toast.show();
+                return;
+            }
+            if (addressList != null) {
+                Address address = addressList.get(0);
+                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                map.addMarker(new MarkerOptions().position(latLng).title("Endpoint"));
+                LatLng startpoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                route = new Route(startpoint, latLng);
+                route.setPlaces(ParseFromTxtLines());
+
+                locSearch.setText("");
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(locSearch.getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+                CreateRoute(startpoint, latLng);
+                stopLocationUpdates();
+            } else {
+                Toast toast = Toast.makeText(MainMapsActivity.this, "Введите адрес!", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        } catch (Exception e) {
+            Toast toast = Toast.makeText(MainMapsActivity.this, "Простите, произошла ошибка.", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+    private void updateLocationUi() {
+
+
+        if (currentLocation != null) {
+            LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            map.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+            map.animateCamera(CameraUpdateFactory.zoomTo(16));
+            if (onRoute) {
+
+                map.animateCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+                map.animateCamera(CameraUpdateFactory.zoomTo(16));
+                LatLng latLng = null;
+                if (NearPoint(route.GetLatLngsForRoute())) {
+
+                    mPlayer = MediaPlayer.create(this, Uri.parse(String.format("/data/data/com.wacked.smarttourist/files/%d.mp3", id)));
+                    mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            stopPlay();
+                        }
+                    });
+                }
+            }
+        }
+
+    }
+
+    private void stopPlay() {
+        mPlayer.stop();
+        try {
+            mPlayer.prepare();
+            mPlayer.seekTo(0);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    public boolean NearPoint(LatLng[] points) {
+        boolean checker = false;
+        for (LatLng point : points) {
+            if (DistanceInMeters(currentLocation.getLatitude(), currentLocation.getLongitude(), point.latitude, point.longitude) < 80.0) {
+                checker = true;
+                id = res.get(String.format("%f%f", point.latitude, point.longitude));
+            }
+        }
+        return checker;
+    }
+
+    public double DistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
+        final double r = 6371e3;
+        double dLat = Math.toRadians(lat2 - lat1) * 0.5;
+        double dLon = Math.toRadians(lon2 - lon1) * 0.5;
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+
+        double a = Math.sin(dLat) * Math.sin(dLat) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon) * Math.sin(dLon);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return r * c;
+    }
+
+    public void CreateRoute(LatLng startpoint, LatLng endpoint) {
+        String api_key = BuildConfig.API_KEY;
+        GeoApiContext geoApiContext = new GeoApiContext.Builder()
+                .apiKey(api_key)
+                .build();
+        DirectionsApiRequest.Waypoint[] waypoints = route.GetWaypointsForRoute();
+        DirectionsApiRequest apiRequest = DirectionsApi.newRequest(geoApiContext);
+        apiRequest.origin(new com.google.maps.model.LatLng(startpoint.latitude, startpoint.longitude));
+        apiRequest.destination(new com.google.maps.model.LatLng(endpoint.latitude, endpoint.longitude));
+        apiRequest.mode(TravelMode.WALKING);
+        apiRequest.waypoints(waypoints);
+        apiRequest.optimizeWaypoints(true);
+        apiRequest.language("Russian");
+        apiRequest.setCallback(new PendingResult.Callback<DirectionsResult>() {
+            @Override
+            public void onResult(DirectionsResult result) {
+                DirectionsRoute[] routes = result.routes;
+                List<com.google.maps.model.LatLng> path = routes[0].overviewPolyline.decodePath();
+                String time = "";
+                long time2 = 0;
+                for (DirectionsLeg leg : routes[0].legs) {
+                    time2 += leg.duration.inSeconds;
+                }
+                time2 = time2 / 60;
+                time = String.format("%dч. %d мин. ", time2 / 60, time2 % 60);
+                LatLngBounds.Builder latLngBuilder = new LatLngBounds.Builder();
+                PolylineOptions line = new PolylineOptions();
+                for (int i = 0; i < path.size(); i++) {
+                    line.add(new LatLng(path.get(i).lat, path.get(i).lng));
+                    latLngBuilder.include(new LatLng(path.get(i).lat, path.get(i).lng));
+                }
+                LatLngBounds latLngBounds = latLngBuilder.build();
+                String finalTime = time;
+                runOnUiThread(() -> {
+                    line.width(16f).color(R.color.purple_500);
+                    CameraUpdate track = CameraUpdateFactory.newLatLngBounds(latLngBounds, 1080, 1920, 25);
+                    map.moveCamera(track);
+                    map.addPolyline(line);
+                    TextView bottom = findViewById(R.id.Bottom_time);
+                    bottom.setText(finalTime);
+
+                });
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                Log.i("OnFailureInfo", e.getMessage());
+            }
+        });
+    }
+    //Временно отключено за ненадобностью деавторизации, которая производится по нажатию кнопки "назад", и настроек.
+    /*
     public void goToProfile(View view) {
         startActivity(new Intent(MainMapsActivity.this, ProfileActivity.class));
     }
-
     public void goToSettings(View view) {
         startActivity(new Intent(MainMapsActivity.this, SettingsActivity.class));
-    }
+    }*/
+
 }

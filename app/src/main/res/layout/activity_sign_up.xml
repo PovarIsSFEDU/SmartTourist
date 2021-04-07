@@ -68,6 +68,7 @@
         android:layout_marginTop="100dp"
         android:onClick="signUpUser"
         android:text="Sign Up"
+        android:textColor="#FFFFFF"
         android:textSize="20sp"
         tools:ignore="HardcodedText" />
 

@@ -12,9 +12,11 @@ import com.wacked.smarttourist.R;
 
 import java.util.Objects;
 
+
 public class ProfileActivity extends AppCompatActivity {
 
     FirebaseAuth auth;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
