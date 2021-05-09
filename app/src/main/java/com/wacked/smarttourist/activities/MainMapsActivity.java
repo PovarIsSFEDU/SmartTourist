@@ -551,22 +551,19 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                             Uri.fromFile(new File(String.format("/data/data/com.wacked.smarttourist/files/%d.mp3", id1))));
                     mPlayer.start();
                     OnPoint = true;
-                    mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            mPlayer.stop();
-                            OnPoint = false;
-                        }
+                    mPlayer.setOnCompletionListener(mp -> {
+                        mPlayer.stop();
+                        OnPoint = false;
                     });
                 }
             }
         }
     }
 
+
     /**
      * Остановка проигрывания аудио.
      */
-
     private void stopPlay() {
         mPlayer.stop();
         try {
