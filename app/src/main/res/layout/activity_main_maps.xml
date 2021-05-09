@@ -68,5 +68,17 @@
         app:rippleColor="@color/yellow"
         tools:ignore="ContentDescription" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="340dp"
+        android:src="@drawable/cross"
+        app:backgroundTint="@color/yellow"
+        app:layout_anchor="@+id/bottom_sheet"
+        app:layout_anchorGravity="top|end"
+        app:rippleColor="@color/yellow"
+        tools:ignore="ContentDescription" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

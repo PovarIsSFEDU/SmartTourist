@@ -85,6 +85,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     static int id = 1;
     FloatingActionButton fab;
+    FloatingActionButton fabClose;
     Route route;
     boolean onRoute = false;
     Map<String, Integer> res = new HashMap<String, Integer>();
@@ -149,11 +150,13 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         buildLocationCallBack();
         buildLocationSettingsRequest();
         startLocationUpdates();
+        stopLocationUpdates();
 
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(v -> {
             if (ReadyToStart) {
                 onRoute = true;
+                fabClose.setVisibility(View.VISIBLE);
                 LatLng userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                 map.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
                 map.animateCamera(CameraUpdateFactory.zoomTo(16));
@@ -164,6 +167,9 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
             }
 
         });
+        fabClose = findViewById(R.id.fab2);
+        fabClose.setVisibility(View.GONE);
+        fabClose.setOnClickListener(this::StopRoute);
         Button Search = findViewById(R.id.search_button);
         Search.setOnClickListener(this::MapSearch);
     }
@@ -251,8 +257,6 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                 super.onLocationResult(locationResult);
                 currentLocation = locationResult.getLastLocation();
                 updateLocationUi();
-
-                //TODO Создание локационного колбэка, переделать метод обновления UI
             }
 
         };
@@ -658,6 +662,20 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                 Log.i("OnFailureInfo", e.getMessage());
             }
         });
+    }
+
+
+    /**
+     * Метод выхода с маршрута.
+     */
+    private void StopRoute(View view) {
+        map.clear();
+        fabClose.setVisibility(View.GONE);
+        onRoute = false;
+        LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+        map.animateCamera(CameraUpdateFactory.newLatLng(currentLatLng));
+        map.animateCamera(CameraUpdateFactory.zoomTo(16));
+        stopLocationUpdates();
     }
 
 
