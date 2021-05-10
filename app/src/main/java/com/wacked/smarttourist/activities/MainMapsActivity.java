@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -66,11 +67,15 @@ import com.wacked.smarttourist.BuildConfig;
 import com.wacked.smarttourist.R;
 import com.wacked.smarttourist.Route;
 
+import org.w3c.dom.Text;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,7 +108,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     private boolean OnPoint = false;
     private boolean ReadyToStart = false;
 
-    public static String DownloadFile(String fname) throws IOException {
+    public static String DownloadFile(String fname, String suffix) throws IOException {
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl("gs://smart-tourist-0-1.appspot.com/");
@@ -114,7 +119,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
             rootPath.mkdirs();
         }
 
-        File localFile = new File(String.format("/data/data/com.wacked.smarttourist/files/%d.mp3", id));
+        File localFile = new File(String.format("/data/data/com.wacked.smarttourist/files/%d"+suffix, id));
         id += 1;
 
         islandRef.getFile(localFile).addOnSuccessListener(taskSnapshot -> Log.d("Successful download", localFile.getPath())).addOnFailureListener(exception -> Log.d("Unsucsesful download", exception.getMessage()));
@@ -137,13 +142,23 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         fusedLocationClient = LocationServices
                 .getFusedLocationProviderClient(this);
         settingsClient = LocationServices.getSettingsClient(this);
+
         for (int i = 1; i < 28; i++) {
             try {
-                DownloadFile(String.format("%d.mp3", i));
+                DownloadFile(String.format("TextFiles/%d.txt", i),".txt");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        id = 1;
+        for (int i = 1; i < 28; i++) {
+            try {
+                DownloadFile(String.format("%d.mp3", i),".mp3");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         ParseIDFromTxtLines();
 
         buildLocationRequest();
@@ -537,6 +552,12 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         }
     }
 
+    /*
+    * Метод обновления bottom_sheet
+    */
+    private void ScrollTextSet() throws IOException {
+
+    }
 
     /**
      * Основной метод обновления UI пользователя.
@@ -554,6 +575,21 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                     mPlayer = MediaPlayer.create(this,
                             Uri.fromFile(new File(String.format("/data/data/com.wacked.smarttourist/files/%d.mp3", id1))));
                     mPlayer.start();
+                    TextView scroll = ((TextView) findViewById(R.id.ScrollText));
+                    scroll.setText("Здесь будет выводиться информация об объекте.");
+
+                    try{
+                        String scrollTextObj = "";
+                        scroll.setMovementMethod(new ScrollingMovementMethod());
+                        List<String> lines = Files.readAllLines(Paths.get(String.format("/data/data/com.wacked.smarttourist/files/%d.txt", id1)));
+                        for (String line : lines) {
+                            scrollTextObj += line;
+                        }
+                        scroll.setText(scrollTextObj);
+
+                    }catch (IOException e){
+                        Log.d("Erros :", e.getMessage());
+                    }
                     OnPoint = true;
                     mPlayer.setOnCompletionListener(mp -> {
                         mPlayer.stop();
