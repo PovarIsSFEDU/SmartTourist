@@ -577,7 +577,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                     mPlayer.start();
                     TextView scroll = ((TextView) findViewById(R.id.ScrollText));
                     scroll.setText("Здесь будет выводиться информация об объекте.");
-
+					/*Работа с текстовыми файлами*/
                     try{
                         String scrollTextObj = "";
                         scroll.setMovementMethod(new ScrollingMovementMethod());
