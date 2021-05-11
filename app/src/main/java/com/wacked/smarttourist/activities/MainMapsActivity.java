@@ -249,10 +249,13 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mPlayer.isPlaying()) {
-            mPlayer.stop();
-            stopPlay();
-
+        try {
+            if (mPlayer.isPlaying()) {
+                mPlayer.stop();
+                stopPlay();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
