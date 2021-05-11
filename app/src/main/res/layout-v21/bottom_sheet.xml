@@ -22,5 +22,12 @@
         android:textSize="20sp"
         tools:ignore="HardcodedText" />
 
+    <TextView
+        android:id="@+id/ScrollText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </TextView>
+
 
 </LinearLayout>

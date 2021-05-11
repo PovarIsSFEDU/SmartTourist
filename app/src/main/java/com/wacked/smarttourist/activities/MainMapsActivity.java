@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -67,8 +68,6 @@ import com.wacked.smarttourist.BuildConfig;
 import com.wacked.smarttourist.R;
 import com.wacked.smarttourist.Route;
 
-import org.w3c.dom.Text;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -96,6 +95,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     Map<String, Integer> res = new HashMap<String, Integer>();
     MediaPlayer mPlayer;
     int id1 = 0;
+    TextView scroll;
     private FusedLocationProviderClient fusedLocationClient;
     private SettingsClient settingsClient;
     private LocationRequest locationRequest;
@@ -108,7 +108,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     private boolean OnPoint = false;
     private boolean ReadyToStart = false;
 
-    public static String DownloadFile(String fname, String suffix) throws IOException {
+    private static String DownloadFile(String fname, String suffix) throws IOException {
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl("gs://smart-tourist-0-1.appspot.com/");
@@ -119,7 +119,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
             rootPath.mkdirs();
         }
 
-        File localFile = new File(String.format("/data/data/com.wacked.smarttourist/files/%d"+suffix, id));
+        File localFile = new File(String.format("/data/data/com.wacked.smarttourist/files/%d" + suffix, id));
         id += 1;
 
         islandRef.getFile(localFile).addOnSuccessListener(taskSnapshot -> Log.d("Successful download", localFile.getPath())).addOnFailureListener(exception -> Log.d("Unsucsesful download", exception.getMessage()));
@@ -143,9 +143,10 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                 .getFusedLocationProviderClient(this);
         settingsClient = LocationServices.getSettingsClient(this);
 
+
         for (int i = 1; i < 28; i++) {
             try {
-                DownloadFile(String.format("TextFiles/%d.txt", i),".txt");
+                DownloadFile(String.format("TextFiles/%d.txt", i), ".txt");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -153,7 +154,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         id = 1;
         for (int i = 1; i < 28; i++) {
             try {
-                DownloadFile(String.format("%d.mp3", i),".mp3");
+                DownloadFile(String.format("%d.mp3", i), ".mp3");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -166,6 +167,12 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         buildLocationSettingsRequest();
         startLocationUpdates();
         stopLocationUpdates();
+
+
+        scroll = findViewById(R.id.ScrollText);
+        scroll.setText("Здесь будет выводиться информация об объекте.");
+        scroll.setTextSize(25);
+        scroll.setTextColor(Color.parseColor("#000000"));
 
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(v -> {
@@ -180,7 +187,6 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                 Toast toast = Toast.makeText(MainMapsActivity.this, "Сначала введите конечный пункт.", Toast.LENGTH_SHORT);
                 toast.show();
             }
-
         });
         fabClose = findViewById(R.id.fab2);
         fabClose.setVisibility(View.GONE);
@@ -189,24 +195,21 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         Search.setOnClickListener(this::MapSearch);
     }
 
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         uiSettings = map.getUiSettings();
-
-
         if (currentLocation != null) {
             LatLng userLocation = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             map.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
             map.animateCamera(CameraUpdateFactory.zoomTo(16));
         }
         enableMyLocation();
-
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case CHECK_SETTINGS_CODE:
@@ -223,11 +226,13 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         }
     }
 
+
     @Override
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
     }
+
 
     @Override
     protected void onResume() {
@@ -239,6 +244,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
             requestLocationPermission();
         }
     }
+
 
     @Override
     public void onDestroy() {
@@ -254,13 +260,12 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
      * Технический метод request-а к местоположению.
      */
     private void buildLocationSettingsRequest() {
-
         LocationSettingsRequest.Builder builder =
                 new LocationSettingsRequest.Builder();
         builder.addLocationRequest(locationRequest);
         locationSettingsRequest = builder.build();
-
     }
+
 
     /**
      * Технический метод request-а к местоположению.
@@ -273,9 +278,9 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                 currentLocation = locationResult.getLastLocation();
                 updateLocationUi();
             }
-
         };
     }
+
 
     /**
      * Технический метод request-а к местоположению.
@@ -285,8 +290,8 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         locationRequest.setInterval(8000);
         locationRequest.setFastestInterval(6000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
     }
+
 
     /**
      * Метод включения иконки местоположения пользователя и кнопки центрирования.
@@ -307,19 +312,18 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         }
     }
 
+
     /**
      * Метод завершения обновления местоположения.
      */
     private void stopLocationUpdates() {
-
         if (!isLocationUpdatesActive) {
             return;
         }
-
         fusedLocationClient.removeLocationUpdates(locationCallback)
                 .addOnCompleteListener(this, task -> isLocationUpdatesActive = false);
-
     }
+
 
     /**
      * Метод начала обновлений местоположения пользователя.
@@ -403,10 +407,10 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         }
     }
 
+
     /**
      * Технический метод для запроса разрешений.
      */
-
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -439,9 +443,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                         }
                 );
             }
-
         }
-
     }
 
     /**
@@ -509,52 +511,58 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void MapSearch(View view) {
-        try {
-            map.clear();
-            TextView locSearch = findViewById(R.id.LocSearch);
-            String location = locSearch.getText().toString() + ", Ростов-на-Дону";
-            List<Address> addressList;
-
-            Geocoder geocoder = new Geocoder(MainMapsActivity.this);
+        if (!onRoute) {
             try {
-                addressList = geocoder.getFromLocationName(location, 1);
+                map.clear();
+                TextView locSearch = findViewById(R.id.LocSearch);
+                String location = locSearch.getText().toString() + ", Ростов-на-Дону";
+                List<Address> addressList;
 
-            } catch (IOException e) {
+                Geocoder geocoder = new Geocoder(MainMapsActivity.this);
+                try {
+                    addressList = geocoder.getFromLocationName(location, 1);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast toast = Toast.makeText(MainMapsActivity.this, "Введите корректный адрес!", Toast.LENGTH_SHORT);
+                    toast.show();
+                    return;
+                }
+                if (addressList != null) {
+                    ReadyToStart = true;
+                    Address address = addressList.get(0);
+                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                    map.addMarker(new MarkerOptions().position(latLng).title("Endpoint"));
+
+                    LatLng startpoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                    route = new Route(startpoint, latLng);
+                    route.setPlaces(ParseFromTxtLines());
+
+
+                    locSearch.setText("");
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(locSearch.getWindowToken(),
+                            InputMethodManager.HIDE_NOT_ALWAYS);
+                    CreateRoute(startpoint, latLng);
+                    stopLocationUpdates();
+                } else {
+                    Toast toast = Toast.makeText(MainMapsActivity.this, "Введите адрес!", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            } catch (Exception e) {
+                Toast toast = Toast.makeText(MainMapsActivity.this, "Простите, произошла ошибка.", Toast.LENGTH_SHORT);
+                toast.show();
                 e.printStackTrace();
-                Toast toast = Toast.makeText(MainMapsActivity.this, "Введите корректный адрес!", Toast.LENGTH_SHORT);
-                toast.show();
-                return;
             }
-            if (addressList != null) {
-                ReadyToStart = true;
-                Address address = addressList.get(0);
-                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                map.addMarker(new MarkerOptions().position(latLng).title("Endpoint"));
-
-                LatLng startpoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                route = new Route(startpoint, latLng);
-                route.setPlaces(ParseFromTxtLines());
-                CreateRoute(startpoint, latLng);
-                stopLocationUpdates();
-                locSearch.setText("");
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(locSearch.getWindowToken(),
-                        InputMethodManager.HIDE_NOT_ALWAYS);
-
-            } else {
-                Toast toast = Toast.makeText(MainMapsActivity.this, "Введите адрес!", Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        } catch (Exception e) {
-            Toast toast = Toast.makeText(MainMapsActivity.this, "Простите, произошла ошибка.", Toast.LENGTH_SHORT);
+        } else {
+            Toast toast = Toast.makeText(MainMapsActivity.this, "Вы уже на маршруте!.", Toast.LENGTH_SHORT);
             toast.show();
-            e.printStackTrace();
         }
     }
 
     /*
-    * Метод обновления bottom_sheet
-    */
+     * Метод обновления bottom_sheet
+     */
     private void ScrollTextSet() throws IOException {
 
     }
@@ -575,10 +583,9 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                     mPlayer = MediaPlayer.create(this,
                             Uri.fromFile(new File(String.format("/data/data/com.wacked.smarttourist/files/%d.mp3", id1))));
                     mPlayer.start();
-                    TextView scroll = ((TextView) findViewById(R.id.ScrollText));
-                    scroll.setText("Здесь будет выводиться информация об объекте.");
-					/*Работа с текстовыми файлами*/
-                    try{
+
+                    /*Работа с текстовыми файлами*/
+                    try {
                         String scrollTextObj = "";
                         scroll.setMovementMethod(new ScrollingMovementMethod());
                         List<String> lines = Files.readAllLines(Paths.get(String.format("/data/data/com.wacked.smarttourist/files/%d.txt", id1)));
@@ -587,8 +594,8 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
                         }
                         scroll.setText(scrollTextObj);
 
-                    }catch (IOException e){
-                        Log.d("Erros :", e.getMessage());
+                    } catch (IOException e) {
+                        Log.d("TextScrollError :", e.getMessage());
                     }
                     OnPoint = true;
                     mPlayer.setOnCompletionListener(mp -> {
@@ -621,7 +628,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     public boolean NearPoint(LatLng[] points) {
         boolean checker = false;
         for (LatLng point : points) {
-            if (DistanceInMeters(currentLocation.getLatitude(), currentLocation.getLongitude(), point.latitude, point.longitude) < 80.0) {
+            if (DistanceInMeters(currentLocation.getLatitude(), currentLocation.getLongitude(), point.latitude, point.longitude) < 30.0) {
                 checker = true;
                 id1 = res.get(String.format("%f,%f", point.latitude, point.longitude));
             }
@@ -639,16 +646,15 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
         double dLon = Math.toRadians(lon2 - lon1) * 0.5;
         lat1 = Math.toRadians(lat1);
         lat2 = Math.toRadians(lat2);
-
         double a = Math.sin(dLat) * Math.sin(dLat) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon) * Math.sin(dLon);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return r * c;
     }
 
+
     /**
      * Метод построения маршрута.
      */
-
     public void CreateRoute(LatLng startpoint, LatLng endpoint) {
         String api_key = BuildConfig.API_KEY;
         GeoApiContext geoApiContext = new GeoApiContext.Builder()
@@ -706,12 +712,19 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
      */
     private void StopRoute(View view) {
         map.clear();
+        TextView bottom = findViewById(R.id.Bottom_time);
+        bottom.setText("Приблизительное время");
+        scroll.setText("Здесь будет выводиться информация об объекте.");
+        try {
+            mPlayer.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         fabClose.setVisibility(View.GONE);
         onRoute = false;
         LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
         map.animateCamera(CameraUpdateFactory.newLatLng(currentLatLng));
         map.animateCamera(CameraUpdateFactory.zoomTo(16));
-        stopLocationUpdates();
     }
 
 
