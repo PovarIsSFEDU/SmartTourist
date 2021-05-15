@@ -631,7 +631,7 @@ public class MainMapsActivity extends AppCompatActivity implements OnMapReadyCal
     public boolean NearPoint(LatLng[] points) {
         boolean checker = false;
         for (LatLng point : points) {
-            if (DistanceInMeters(currentLocation.getLatitude(), currentLocation.getLongitude(), point.latitude, point.longitude) < 30.0) {
+            if (DistanceInMeters(currentLocation.getLatitude(), currentLocation.getLongitude(), point.latitude, point.longitude) < 40.0) {
                 checker = true;
                 id1 = res.get(String.format("%f,%f", point.latitude, point.longitude));
             }
